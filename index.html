@@ -1,0 +1,85 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ananya’s Portfolio</title>
+
+  <!-- Fira Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fira+Sans&display=swap"
+    rel="stylesheet"
+  >
+  
+  <!-- Bitcount -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link 
+  href="https://fonts.googleapis.com/css2?family=Bitcount:wght@500&display=swap" 
+  rel="stylesheet" 
+/>
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Blob Hover/Click SFX -->
+<audio id="sfx-red"    src="assets/audio/Tarot&Mysticism-SFX.wav" preload="auto"></audio>
+<audio id="sfx-blue"   src="assets/audio/CommunityWork-SFX.wav"    preload="auto"></audio>
+<audio id="sfx-teal"   src="assets/audio/WearableArt-SFX.wav"       preload="auto"></audio>
+<audio id="sfx-pink"   src="assets/audio/WebBasedWorlds-SFX.wav"    preload="auto"></audio>
+<audio id="sfx-lime"   src="assets/audio/Client&CopyWork-SFX.wav"   preload="auto"></audio>
+<audio id="sfx-purple" src="assets/audio/Photo&Video-SFX.wav"      preload="auto"></audio>
+
+ <!-- LOADER -->
+  <div class="loader">
+    <div class="loading-text">Loading...</div>
+    <div class="loading-percentage">0%</div>
+  </div>
+
+    <!-- SPLASH OVERLAY -->
+  <div class="splash-overlay">
+    <button id="enter-btn">ENTER TO CHOOSE YOUR BLOB</button>
+  </div>
+
+  <!-- HOMEPAGE -->
+  <div class="homepage">
+    <!-- rotatable bg layer -->
+    <div class="bg-wrapper"></div>
+
+    <!-- UI elements -->
+    <img class="hamburger" src="assets/images/hamburg.png" alt="Menu" />
+    <ul class="dropdown-menu fira-sans-regular">
+      <a href="about.html">About Me</a>
+      <li><a href="#contact">Contact</a></li>
+      <li>
+<a href="assets/ananya-full-portfolio.pdf" target="_blank">
+  View Full Portfolio (PDF)
+</a>
+
+      </li>
+    </ul>
+
+    <img class="name-image" src="assets/images/name.png" alt="Ananya Joshi" />
+    <img class="redblob"    src="assets/images/redblob.png" alt="Click Me" />
+    <img class="tarot-overlay" src="" alt="Tarot Popup" />
+    <img class="blueblob" src="assets/images/blueblob.png" alt="Click Me" />
+    <img class="comwork-overlay" src="" alt="ComWork Popup" />
+    <img class="tealblob" src="assets/images/tealblob.png" alt="Click Me" />
+    <img class="weard-overlay" src="" alt="Weard Popup" />
+    <img class="pinkblob" src="assets/images/pinkblob.png" alt="Click Me" />
+    <img class="web-overlay" src="" alt="Web Popup" />
+    <img class="limeblob" src="assets/images/limeblob.png" alt="Click Me" />
+    <img class="client-overlay" src="" alt="Client Popup" />
+    <img class="purpleblob" src="assets/images/purpleblob.png" alt="Click Me" />
+    <img class="photvid-overlay" src="" alt="Photo/Vid Popup" />
+
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

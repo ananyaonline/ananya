@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Get in Touch</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/images/favicon.png">
+  <link rel="apple-touch-icon" type="image/png" sizes="192x192" href="assets/images/favicon.png">
+</head>
+<body class="contact-page fira-sans-regular">
+
+  <!-- HAMBURGER + DROPDOWN -->
+  <img class="hamburger" src="assets/images/hamburg.png" alt="Menu" />
+  <ul class="dropdown-menu fira-sans-regular">
+    <li><a href="about.html">About Me</a></li>
+    <li><a href="contact.html">Contact</a></li>
+    <li>
+      <a href="assets/ananya-full-portfolio.pdf" target="_blank">
+        View Full Portfolio (PDF)
+      </a>
+    </li>
+  </ul>
+
+  <!-- CONTACT CONTENT -->
+  <main class="contact-container">
+    <h1 class="contact-title">Get in Touch</h1>
+
+    <!-- Direct Links -->
+    <div class="contact-links">
+      <p><a href="mailto:yourname@email.com">Email Me: ananyajoshionline@gmail.com</a></p>
+      <p><a href="https://instagram.com/yourusername" target="_blank">Instagram: @ananyaj</a></p>
+    </div>
+
+    <!-- Contact Form -->
+    <form action="https://formspree.io/f/xdklnebr" method="POST" class="contact-form">
+      <label>
+        Your Name:
+        <input type="text" name="name" required>
+      </label>
+      <label>
+        Subject:
+        <input type="email" name="_replyto" required>
+      </label>
+      <label>
+        Message:
+        <textarea name="message" rows="5" required></textarea>
+      </label>
+      <button type="submit">Send</button>
+    </form>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

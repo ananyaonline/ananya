@@ -1,0 +1,683 @@
+/* styles.css */
+
+/* IMPORTS & RESET */
+@font-face {
+  font-family: "Ancient Modern Tales";
+  src: url("assets/fonts/Ancient Modern Tales.otf") format("opentype");
+}
+.fira-sans-regular {
+  font-family: "Fira Sans", sans-serif;
+}
+*,
+*::before,
+*::after {
+  margin: 0; padding: 0; box-sizing: border-box;
+}
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  background: #282825;
+}
+
+/* LOADER */
+.loader {
+  position: fixed; inset: 0;
+  background: #6666ff;
+  display: flex; flex-direction: column;
+  justify-content: center; align-items: center;
+  z-index: 999;
+}
+.loading-text,
+.loading-percentage {
+  font-family: "Ancient Modern Tales", sans-serif;
+  color: #11cca9; text-align: center;
+}
+.loading-text { font-size: 2rem; }
+.loading-percentage { font-size: 1.5rem; margin-top: .5rem; }
+.loader.hidden { display: none; }
+
+/* HOMEPAGE CONTAINER */
+.homepage {
+  position: fixed; inset: 0;
+  overflow: hidden;
+  visibility: hidden; opacity: 0;
+  transition: opacity .3s ease, visibility 0s linear .3s;
+}
+.homepage.visible {
+  visibility: visible; opacity: 1; transition-delay: 0s;
+}
+
+/* BACKGROUND LAYER */
+.bg-wrapper {
+  position: fixed;
+  top: 50%; left: 50%;
+  width: 105vw; height: 105vh;
+  transform: translate(-50%, -50%);
+  background: #282825 url("assets/images/introbg.png")
+              center/cover no-repeat;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity .3s ease, visibility 0s linear .3s;
+  overflow: hidden;
+}
+
+/* SHOW BG when loader is done */
+.homepage.visible .bg-wrapper {
+  visibility: visible;
+  opacity: 1;
+  transition-delay: 0s;
+}
+
+/* ONLY ROTATE THE BG ON NARROW SCREENS */
+@media (max-width: 1024px) {
+  .bg-wrapper {
+    width: 105vh;
+    height: 105vw;
+    transform: translate(-50%, -50%) rotate(90deg);
+    transform-origin: center;
+  }
+}
+
+/* HAMBURGER & MENU */
+.hamburger {
+  position: absolute; top: 1rem; right: 1rem;
+  width: 6rem; cursor: pointer;
+  opacity: 0; transition: opacity .3s ease;
+  z-index: 200;
+}
+.homepage.visible .hamburger {
+  opacity: 1;
+}
+
+.dropdown-menu {
+  position: absolute; top: 4.5rem; right: 1.5rem;
+  list-style: none; padding: .5rem 0;
+  background: rgba(40,40,37,.95);
+  border-radius: .25rem; box-shadow: 0 4px 12px rgba(0,0,0,.3);
+  opacity: 0; visibility: hidden;
+  transform: translateY(-.5rem);
+  transition: opacity .3s, transform .3s;
+  z-index: 250;
+}
+.dropdown-menu.visible {
+  opacity: 1; visibility: visible;
+  transform: translateY(0);
+}
+.dropdown-menu li + li { margin-top: .25rem; }
+.dropdown-menu a {
+  display: block; padding: .5rem 1rem;
+  color: #fff; text-decoration: none;
+}
+.dropdown-menu a:hover {
+  background: rgba(255,255,255,.1);
+}
+
+/* NAME IMAGE */
+.name-image {
+  position: absolute; top: 50%; left: 50%;
+  max-width: 80vw; max-height: 50vh;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: 0; visibility: hidden;
+  transition: transform .3s ease, opacity .4s ease;
+  z-index: 100;
+  pointer-events: none;
+}
+.homepage.visible .name-image {
+  opacity: 1; visibility: visible;
+}
+
+/* RED BLOB */
+.redblob {
+  position: absolute; 
+  bottom: -30%; 
+  left: 40%;
+  transform: translateX(-50%);
+  max-width: 60%; cursor: pointer;
+  opacity: 0; visibility: hidden;
+  transition: transform .3s, opacity .3s;
+  z-index: 1;
+}
+.redblob:hover {
+  transform: translateX(-50%) scale(1.02);
+}
+.homepage.visible .redblob {
+  opacity: 1; visibility: visible;
+}
+
+@media (max-width: 1024px) {
+  .redblob {
+    bottom: -10%; /* brings more of it on screen */
+    left: 50%;     /* center it more cleanly on smaller screens */
+    transform: translateX(-50%);
+    max-width: 110vw; /* increase size from default 60% */
+  }
+
+  .redblob:active {
+    transform: translateX(-50%) scale(1.02);
+  }
+}
+
+/* Tarot Overlay */
+.tarot-overlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: calc(100vw - 40px);
+  max-height: calc(100vh - 40px);
+  z-index: 140;
+
+  /* ← prevent it from blocking anything when hidden */
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+
+  transition: opacity 0.4s ease, visibility 0s linear 0.4s;
+}
+
+.tarot-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto; /* ← allow clicks only when visible */
+  transition-delay: 0s;  /* instant visibility when showing */
+}
+
+/* BLUE BLOB */
+.blueblob {
+  position: absolute;
+  bottom: 10%;    /* adjust up/down */
+  right: -2%;     /* adjust left/right */
+  transform: translate(0, 0);
+  max-width: 25%;  /* or whatever size matches */
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transition: transform .3s ease, opacity .4s ease;
+  z-index: 1;
+}
+
+/* when homepage becomes visible */
+.homepage.visible .blueblob {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* BLUE BLOB HOVER/ACTIVE SCALE */
+.blueblob:hover {
+  transform: translate(0, 0) scale(1.02);
+}
+
+@media (max-width: 1024px) {
+
+  .blueblob {
+    bottom: 35%;
+    right: -3%;
+    max-width: 35%;
+  }
+
+  .blueblob:active {
+    transform: translate(0, 0) scale(1.02);
+  }
+}
+
+/* COMWORK Overlay */
+.comwork-overlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: calc(100vw - 40px);
+  max-height: calc(100vh - 40px);
+  z-index: 140;
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+
+  transition: opacity 0.4s ease, visibility 0s linear 0.4s;
+}
+
+.comwork-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+
+/* TEAL BLOB — place this at the very end of styles.css */
+.tealblob {
+  position: absolute;
+  top: 22%;                      /* vertical center point */
+  right: -15%;                   /* half hidden on desktop */
+  transform: translateY(-50%);
+  max-width: 50%;                /* size to taste */
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transition: transform .3s ease, opacity .4s ease;
+  z-index: 2;                  /* between name-image (100) & hamburger (200) */
+}
+.homepage.visible .tealblob {
+  opacity: 1;
+  visibility: visible;
+}
+.tealblob:hover {
+  transform: translateY(-50%) scale(1.02);
+}
+@media (max-width: 1024px) {
+  .tealblob {
+    right: -40%;                 /* ~75% hidden on mobile */
+    max-width: 82%;
+  }
+  .tealblob:active {
+    transform: translateY(-50%) scale(1.02);
+  }
+}
+
+/* WEAR Overlay */
+.weard-overlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: calc(100vw - 40px);
+  max-height: calc(100vh - 40px);
+  z-index: 140;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .4s ease, visibility 0s linear .4s;
+}
+.weard-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+
+/* PINK BLOB */
+.pinkblob {
+  position: absolute;
+  top: -22%;            /* 25% hidden above viewport */
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 25%;       /* adjust size as needed */
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transition: transform .3s ease, opacity .4s ease;
+  z-index: 1;         /* above name-image (100), below hamburger (200) */
+}
+.homepage.visible .pinkblob {
+  opacity: 1;
+  visibility: visible;
+}
+.pinkblob:hover {
+  transform: translateX(-50%) scale(1.02);
+}
+@media (max-width: 1024px) {
+  .pinkblob {
+    /* same hidden amount on mobile */
+    top: -5%;
+    max-width: 50%;
+  }
+  .pinkblob:active {
+    transform: translateX(-50%) scale(1.02);
+  }
+}
+
+/* WEB Overlay */
+.web-overlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: calc(100vw - 40px);
+  max-height: calc(100vh - 40px);
+  z-index: 140;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .4s ease, visibility 0s linear .4s;
+}
+.web-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+
+/* LIME BLOB */
+.limeblob {
+  position: absolute;
+  top: -8%;           /* 10% hidden above viewport */
+  left: -9%;           /* near top-left */
+  transform: translateY(0);
+  max-width: 45%;      /* adjust as needed */
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transition: transform .3s ease, opacity .4s ease;
+  z-index: 1;        /* above name-image (100), below hamburger (200) */
+}
+.homepage.visible .limeblob {
+  opacity: 1;
+  visibility: visible;
+}
+.limeblob:hover {
+  transform: scale(1.02);
+}
+@media (max-width: 1024px) {
+  .limeblob {
+        top: 20%;
+        max-width: 70%;
+        left: -30%;
+  }
+  .limeblob:active {
+    transform: scale(1.02);
+  }
+}
+
+/* CLIENT Overlay */
+.client-overlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: calc(100vw - 40px);
+  max-height: calc(100vh - 40px);
+  z-index: 140;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .4s ease, visibility 0s linear .4s;
+}
+.client-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+
+/* PURPLE BLOB */
+.purpleblob {
+  position: absolute;
+  left: 1%;           /* 50% hidden on desktop left side */
+  top: 60%;             /* slightly below name image */
+  transform: translateY(-50%);
+  max-width: 30%;       /* adjust size as needed */
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transition: transform .3s ease, opacity .4s ease;
+  z-index: 1;         /* above name-image (100), below hamburger (200) */
+}
+.homepage.visible .purpleblob {
+  opacity: 1;
+  visibility: visible;
+}
+.purpleblob:hover {
+  transform: translateY(-50%) scale(1.02);
+}
+@media (max-width: 1024px) {
+  .purpleblob {
+        left: -15%;
+        max-width: 60%;
+        top: 65%;
+  }
+  .purpleblob:active {
+    transform: translateY(-50%) scale(1.02);
+  }
+}
+
+/* PHOTO/VID Overlay */
+.photvid-overlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: calc(100vw - 40px);
+  max-height: calc(100vh - 40px);
+  z-index: 140;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .4s ease, visibility 0s linear .4s;
+}
+.photvid-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+
+/* SPLASH OVERLAY */
+.splash-overlay {
+  position: fixed;
+  inset: 0;
+  background: #6666ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;           /* above homepage but below loader (999) */
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+
+/* Hide by adding .hidden */
+.splash-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* ENTER button styling */
+#enter-btn {
+  font-family: 'Bitcount', sans-serif;
+  font-size: 2rem;
+  background: transparent;
+  border: 2px solid #11cca9;
+  color: #11cca9;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  border-radius: 0.25rem;
+  transition: background 0.3s ease, color 0.3s ease;
+  margin: 10px;
+}
+
+#enter-btn:hover {
+  background: #fff;
+  border: 2px solid #000;
+  color: #000;
+}
+
+.about-bg-wrapper {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 105vw;
+  height: 105vh;
+  transform: translate(-50%, -50%);
+  background: #282825 url("assets/images/aboutbg.png")
+              center/cover no-repeat;
+  visibility: visible; /* always visible on about page */
+  opacity: 1;
+  overflow: hidden;
+}
+
+@media (max-width: 1024px) {
+  .about-bg-wrapper {
+    width: 105vh;
+    height: 105vw;
+    transform: translate(-50%, -50%) rotate(90deg);
+    transform-origin: center;
+  }
+}
+
+.about-heading-image {
+    display: block;
+    height: auto;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+    max-width: 90%;
+    left: 2%;
+    top: -10vh;
+}
+
+@media (max-width: 1024px) {
+  .about-heading-image {
+    content: url("assets/images/abtheadph.png");
+    max-width: 75%;
+    left: -2%;
+    top: 1vh;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .about-heading-image {
+    content: url("assets/images/abtheadph.png");
+    max-width: 110%;
+    left: -9%;
+    top: 1vh;
+  }
+}
+
+@font-face {
+  font-family: 'JetBrainsMonoMedium';
+  src: url('assets/fonts/JetBrainsMono-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+.about-text {
+  font-family: 'JetBrainsMonoMedium', monospace;
+  font-size: 1.5rem;
+  line-height: 1.4;
+  max-width: 700px;
+  position: fixed;
+  text-align: right;
+  bottom: 20px;
+  right: 20px;
+  color: #d6f30d;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+/* On phones: bottom-left instead */
+@media (max-width: 540px) {
+  .about-text {
+    right: auto;
+    left: 20px;
+    font-size: 1rem;
+    text-align: left;
+  }
+}
+
+/* ABOUT PAGE IMAGE */
+.about-image {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  max-width: 500px;   /* adjust size to taste */
+  height: auto;
+  z-index: 1;
+}
+
+/* On phones: move above the text */
+@media (max-width: 1024px) {
+  .about-image {
+    bottom: 30%;     /* sits just above the text block */
+  }
+}
+
+/* On phones: move above the text */
+@media (min-width: 540px) and (max-width: 799px) {
+  .about-image {
+    display: none;
+  }
+}
+
+/* On phones: move above the text */
+@media (max-width: 499px) {
+  .about-image {
+    bottom: 35%;     /* sits just above the text block */
+    left: 20%;
+    max-width: 270px;
+  }
+}
+
+/* On phones: move above the text */
+@media (max-width: 375px) {
+  .about-image {
+   display: none;
+  }
+}
+
+/* CONTACT PAGE */
+.contact-container {
+  max-width: 900px;
+  margin: 120px auto 60px;
+  padding: 20px;
+  text-align: left;
+  font-family: 'JetBrainsMonoMedium', monospace;
+  color: #d6f30d;
+}
+
+.contact-title {
+  font-size: 2rem;
+  margin-bottom: 20px;
+}
+
+.contact-links a {
+  display: inline-block;
+  margin: 10px 0;
+  font-size: 1.1rem;
+  color: #d6f30d;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+.contact-links a:hover {
+  opacity: 0.7;
+}
+
+.contact-form {
+  margin-top: 30px;
+  text-align: left;
+  color: #d6f30d;
+}
+
+.contact-form label {
+  display: block;
+  margin-bottom: 15px;
+  font-size: 1rem;
+}
+
+.contact-form input,
+.contact-form textarea {
+  width: 100%;
+  padding: 10px;
+  font-family: inherit;
+  font-size: 1rem;
+  border: 1px solid #aaa;
+  border-radius: 5px;
+  margin-top: 5px;
+}
+
+.contact-form button {
+  margin-top: 15px;
+  padding: 10px 20px;
+  font-family: inherit;
+  font-size: 1rem;
+  border: none;
+  border-radius: 5px;
+  background-color: black;
+  color: white;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+.contact-form button:hover {
+  opacity: 0.8;
+}
+

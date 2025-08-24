@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About Me</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/images/favicon.png">
+  <link rel="apple-touch-icon" type="image/png" sizes="192x192" href="assets/images/favicon.png">
+  <style>
+    /* keep this minimal — only forces hamburger visible on about page */
+    body.about-page .hamburger {
+      opacity: 1 !important;
+      pointer-events: auto;
+    }
+  </style>
+</head>
+<body class="about-page">
+
+    <!-- Header Image (name) -->
+    <div class="about-header">
+      <img src="assets/images/abtheadsk.png" 
+           alt="Ananya Joshi" 
+           class="about-heading-image">
+    </div>
+
+  <!-- ABOUT BACKGROUND (you already have this class in styles.css) -->
+  <div class="about-bg-wrapper"></div>
+
+  <!-- HAMBURGER + DROPDOWN (same structure as index.html) -->
+  <img class="hamburger" src="assets/images/hamburg.png" alt="Menu" />
+  <ul class="dropdown-menu fira-sans-regular">
+    <li><a href="about.html">About Me</a></li>
+    <li><a href="contact.html">Contact</a></li>
+    <li>
+<a href="assets/ananya-full-portfolio.pdf" target="_blank">
+  View Full Portfolio (PDF)
+</a>
+
+    </li>
+  </ul>
+
+   <img src="assets/images/about.png" alt="About Decorative" class="about-image">
+
+  <div class="about-text">
+    I am an artist and writer fascinated by the intersections of pop culture, politics, and visual art. 
+    Playfully weaving elements of cuteness and whimsy into my work, I always seek to awaken a sense of inner child. 
+    Inspired by internet culture across the years, I passionately long for a revival of the Web 1.0 spirit. 
+    Above all, I envision a world where art is cherished for its creative resonance rather than its commodifiable value.
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
