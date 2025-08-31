@@ -557,6 +557,9 @@ html, body {
 }
 
 /* ---------- ABOUT: new layout (image + text share viewport) ---------- */
+:root {
+  --about-header-height: 26vh; /* tweak this value slightly (e.g., 22vh–30vh) if needed */
+}
 
 @media (max-width: 540px) {
   :root { --about-header-height: 26vh; } /* header tends to take slightly more vertical space on tiny phones */
