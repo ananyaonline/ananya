@@ -1,3 +1,4 @@
+
 /* styles.css */
 
 /* IMPORTS & RESET */
@@ -532,21 +533,21 @@ html, body {
 @media (max-width: 1024px) {
   .about-heading-image {
     content: url("assets/images/abtheadph.png");
-    max-width: 75%;
-    left: -2%;
+     max-width: 100%;
+    align-items: center;  
     top: 1vh;
   }
 }
-
 
 @media (max-width: 768px) {
   .about-heading-image {
     content: url("assets/images/abtheadph.png");
-    max-width: 110%;
-    left: -9%;
+    max-width: 100%;
+    align-items: center;    
     top: 1vh;
   }
 }
+
 
 @font-face {
   font-family: 'JetBrainsMonoMedium';
@@ -555,68 +556,116 @@ html, body {
   font-style: normal;
 }
 
-.about-text {
-  font-family: 'JetBrainsMonoMedium', monospace;
-  font-size: 1.5rem;
-  line-height: 1.4;
-  max-width: 700px;
-  position: fixed;
-  text-align: right;
-  bottom: 20px;
-  right: 20px;
-  color: #d6f30d;
-  padding: 12px;
-  border-radius: 8px;
-}
+/* ---------- ABOUT: new layout (image + text share viewport) ---------- */
 
-/* On phones: bottom-left instead */
 @media (max-width: 540px) {
-  .about-text {
-    right: auto;
-    left: 20px;
-    font-size: 1rem;
-    text-align: left;
-  }
+  :root { --about-header-height: 26vh; } /* header tends to take slightly more vertical space on tiny phones */
+  .about-text { font-size: 1rem; line-height: 1.35; }
+  .about-image { height: 50%; max-height: 50%; }
 }
 
-/* ABOUT PAGE IMAGE */
-.about-image {
+/* Occupies the remaining viewport below the header (large screens) */
+.about-main {
   position: fixed;
-  bottom: 20px;
-  left: 20px;
-  max-width: 500px;   /* adjust size to taste */
-  height: auto;
+  top: var(--about-header-height);
+  left: 0;
+  right: 0;
+  height: calc(100vh - var(--about-header-height));
+  display: flex;
+  gap: 2rem;                    /* small gap so they never touch */
+  padding: 0 3rem 4vh;          /* bottom padding pushes content a little lower */
+  align-items: flex-end;        /* bottom-align so both sit lower (keeps header clear) */
+  justify-content: space-between;
+  overflow: hidden;
   z-index: 1;
 }
 
-/* On phones: move above the text */
+/* Left: image roughly half the width but limited in height so it never exceeds text height */
+.about-image {
+  flex: 0 0 48%;
+  max-width: 48%;
+  width: auto;
+  /* Max height is a percentage of the .about-main height; keeping it smaller than text */
+  max-height: 60%;
+  height: auto;
+  object-fit: contain;
+  align-self: flex-end;         /* keeps image bottom-aligned with text */
+  display: block;
+}
+
+/* Right: text block, slightly taller than image so image will not overpower it */
+.about-text {
+  flex: 0 0 48%;
+  max-width: 48%;
+  width: 48%;
+  display: flex;
+  align-items: center;          /* vertical centering of text within its block */
+  justify-content: flex-end;
+  min-height: 66%;              /* text block will be taller than image (as % of .about-main height) */
+  font-family: 'JetBrainsMonoMedium', monospace;
+  font-size: 1.5rem;
+  line-height: 1.4;
+  color: #d6f30d;
+  padding: 16px;
+  border-radius: 8px;
+  text-align: right;
+  overflow: visible;            /* do NOT create a scrollbar inside the text */
+  box-sizing: border-box;
+}
+
+/* Prevent flex children from forcing horizontal overflow */
+.about-main > * { min-width: 0; }
+
+/* ========== Responsive: stacked under header on narrower screens ========== */
 @media (max-width: 1024px) {
+  /* place the about area directly under the header without large blank padding */
+  .about-main {
+    position: relative;        /* allow normal page flow on mobile */
+    top: -160px;                /* nudge it up so the image sits just under your header (adjust ±10px if needed) */
+    height: auto;
+    padding: 1rem 1.25rem 2rem; /* light top padding so image doesn't touch edge */
+    flex-direction: column;
+    gap: 1.5rem;               /* preserve breathing space between image and text */
+    align-items: center;
+    justify-content: flex-start;
+  }
+
   .about-image {
-    bottom: 30%;     /* sits just above the text block */
+    flex: 0 0 auto;
+    max-width: 90%;
+    width: auto;
+    height: auto;
+    max-height: 30vh;        /* keeps image a good size — won't overlap header */
+    margin: 0 auto;
+    align-self: center;
+  }
+
+  .about-text {
+    flex: 0 0 auto;
+    width: 100%;              /* use the full available width so text isn't squeezed */
+    max-width: 100%;
+    height: auto;
+    max-height: none;
+    min-height: auto;
+    font-size: 1.12rem;       /* slightly larger for readability */
+    text-align: left;         /* left-aligned on narrow screens, as requested */
+    display: block;
+    padding: 1px 14px;       /* make use of the left/right space */
+    overflow: visible;        /* no inner scrollbar — page scrolls instead */
+    box-sizing: border-box;
+    margin: 0;
   }
 }
 
-/* On phones: move above the text */
-@media (min-width: 540px) and (max-width: 799px) {
-  .about-image {
-    display: none;
+/* tiny phones: keep the same behavior but tighten a bit */
+@media (max-width: 540px) {
+  .about-main {
+    top: -80px;               /* slightly less nudge on very small screens */
+    padding: 0.75rem 1rem 1.75rem;
+    gap: 1rem;
   }
-}
-
-/* On phones: move above the text */
-@media (max-width: 499px) {
-  .about-image {
-    bottom: 35%;     /* sits just above the text block */
-    left: 20%;
-    max-width: 270px;
-  }
-}
-
-/* On phones: move above the text */
-@media (max-width: 375px) {
-  .about-image {
-   display: none;
-  }
+  .about-text { font-size: 1rem; line-height: 1.35; }
+  .about-image { max-height: 30vh; }
 }
 
 /* CONTACT PAGE */
@@ -691,4 +740,3 @@ body.contact-page {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch; /* smooth scrolling on iOS */
 }
-
