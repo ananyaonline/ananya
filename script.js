@@ -1,4 +1,7 @@
-// script.js (full — replace your existing file with this)
+/* script.js (FULL replacement)
+   Replaces loader with a real asset-aware preloader while preserving
+   all your existing functionality (audio unlock, hamburger, blobs, overlays).
+*/
 
 /* —————————————————————————————————
    Audio: elements, volumes & unlock
@@ -64,29 +67,229 @@ const menu          = document.querySelector('.dropdown-menu');
 
 
 /* —————————————————————————————————
-   Loader -> homepage -> splash
-   Only run this on pages that have these elements (index.html)
+   Asset-aware preloader
+   - tracks <img> and audio elements,
+   - also scans CSS background-image urls and preloads them,
+   - updates loader percentage based on actual assets loaded.
+   - has a safety timeout to avoid infinite waiting.
    ————————————————————————————————— */
-if (loaderEl && percentEl && homepageEl && splashOverlay && enterBtn) {
-  let pct = 0;
-  const tick = setInterval(() => {
-    pct += Math.floor(Math.random() * 5) + 1;
-    if (pct > 100) pct = 100;
-    percentEl.textContent = `${pct}%`;
 
-    if (pct === 100) {
-      clearInterval(tick);
+function extractUrlsFromStyle(styleValue) {
+  // Extract url(...) occurrences from a CSS property string
+  const urls = [];
+  if (!styleValue || styleValue === 'none') return urls;
+  const regex = /url\((['"]?)(.*?)\1\)/g;
+  let match;
+  while ((match = regex.exec(styleValue)) !== null) {
+    if (match[2]) urls.push(match[2]);
+  }
+  return urls;
+}
+
+function collectBackgroundImageUrls() {
+  const urls = new Set();
+  // scan all elements and inspect computed style backgroundImage
+  const all = document.querySelectorAll('*');
+  all.forEach(el => {
+    try {
+      const style = window.getComputedStyle(el);
+      const bg = style.getPropertyValue('background-image');
+      extractUrlsFromStyle(bg).forEach(u => urls.add(u));
+    } catch (e) {
+      // ignore cross-origin computed style errors (rare)
+    }
+  });
+  return Array.from(urls);
+}
+
+function preloadImage(url) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve({ url, ok: true });
+    img.onerror = () => resolve({ url, ok: false });
+    // handle already data urls or cache quickly
+    img.src = url;
+    // if already cached, onload may not fire synchronously; that's fine
+  });
+}
+
+function preloadAudio(el) {
+  return new Promise((resolve) => {
+    if (!el) return resolve({ el, ok: false });
+    // If audio already ready (networkState), treat accordingly
+    if (el.readyState >= 4) { // HAVE_ENOUGH_DATA / canplaythrough in many browsers
+      return resolve({ el, ok: true });
+    }
+    // prefer canplaythrough, fallback to loadeddata or loadedmetadata
+    const onCanPlay = () => cleanup(true);
+    const onLoaded = () => cleanup(true);
+    const onError = () => cleanup(false);
+
+    function cleanup(ok) {
+      el.removeEventListener('canplaythrough', onCanPlay);
+      el.removeEventListener('loadeddata', onLoaded);
+      el.removeEventListener('loadedmetadata', onLoaded);
+      el.removeEventListener('error', onError);
+      resolve({ el, ok });
+    }
+
+    el.addEventListener('canplaythrough', onCanPlay, { once: true });
+    el.addEventListener('loadeddata', onLoaded, { once: true });
+    el.addEventListener('loadedmetadata', onLoaded, { once: true });
+    el.addEventListener('error', onError, { once: true });
+
+    // In some browsers a small play/pause can help trigger loading events; try a muted play then pause.
+    try {
+      const wasMuted = el.muted;
+      el.muted = true;
+      const p = el.play();
+      if (p && p.catch) p.catch(() => {}).then(() => {
+        el.pause();
+        el.muted = wasMuted;
+      });
+    } catch (e) {
+      // ignore
+    }
+  });
+}
+
+function buildAssetList() {
+  const assets = {
+    imageUrls: [],
+    audioEls: []
+  };
+
+  // 1) <img> tags with a src
+  document.querySelectorAll('img[src]').forEach(img => {
+    const src = img.getAttribute('src');
+    if (src) assets.imageUrls.push(src);
+  });
+
+  // 2) CSS background images
+  collectBackgroundImageUrls().forEach(url => {
+    // Ignore data: urls? No, we'll attempt to preload them too (fast)
+    if (url) assets.imageUrls.push(url);
+  });
+
+  // 3) audio elements present on the page (your SFX elements)
+  document.querySelectorAll('audio[src]').forEach(audio => {
+    assets.audioEls.push(audio);
+  });
+
+  // make unique
+  assets.imageUrls = Array.from(new Set(assets.imageUrls));
+  assets.audioEls = Array.from(new Set(assets.audioEls));
+
+  return assets;
+}
+
+function startPreloader(options = {}) {
+  const { timeoutMs = 18000, minDisplayMs = 500 } = options;
+  if (!loaderEl || !percentEl || !homepageEl || !splashOverlay) {
+    // missing elements — fallback to previous behavior (show homepage immediately)
+    if (loaderEl) loaderEl.classList.add('hidden');
+    if (homepageEl) homepageEl.classList.add('visible');
+    document.body.style.overflow = 'auto';
+    if (splashOverlay) splashOverlay.classList.remove('hidden');
+    return Promise.resolve();
+  }
+
+  const { imageUrls, audioEls } = buildAssetList();
+  const totalCount = imageUrls.length + audioEls.length;
+  if (totalCount === 0) {
+    // nothing to wait for
+    loaderEl.classList.add('hidden');
+    homepageEl.classList.add('visible');
+    document.body.style.overflow = 'auto';
+    splashOverlay.classList.remove('hidden');
+    percentEl.textContent = '100%';
+    return Promise.resolve();
+  }
+
+  let loadedCount = 0;
+  let lastPercent = 0;
+
+  function updatePercent() {
+    const pct = Math.round((loadedCount / totalCount) * 100);
+    // animate small jumps: ensure monotonic increase
+    if (pct > lastPercent) {
+      lastPercent = pct;
+      percentEl.textContent = `${pct}%`;
+    }
+  }
+
+  // preload everything and listen to results
+  const promises = [];
+
+  imageUrls.forEach(url => {
+    const p = preloadImage(url).then(() => {
+      loadedCount++;
+      updatePercent();
+    });
+    promises.push(p);
+  });
+
+  audioEls.forEach(el => {
+    const p = preloadAudio(el).then(() => {
+      loadedCount++;
+      updatePercent();
+    });
+    promises.push(p);
+  });
+
+  // safety: if some assets never resolve, we use a timeout to proceed
+  const timeoutPromise = new Promise((resolve) => {
+    setTimeout(() => {
+      resolve('timeout');
+    }, timeoutMs);
+  });
+
+  // Also ensure the loader isn't removed too quickly — keep a minimum display time
+  const minDisplayPromise = new Promise(res => setTimeout(res, minDisplayMs));
+
+  // As the assets load, we will update the percent. But to make it feel smoother, if percent
+  // gets stuck at e.g. 0 for a moment, we can gently increment a "visual" percent up to the real percent.
+  // We'll just ensure percentEl always reflects the computed value, so that's sufficient.
+
+  return Promise.race([ Promise.all(promises), timeoutPromise ])
+    .then(() => {
+      // ensure percent shows 100%
+      percentEl.textContent = '100%';
+      return minDisplayPromise;
+    })
+    .then(() => {
+      // hide loader and show homepage (same behavior as your previous code)
       loaderEl.classList.add('hidden');
       homepageEl.classList.add('visible');
-      // allow page to scroll after loader
       document.body.style.overflow = 'auto';
-      // show the splash overlay (ENTER)
       splashOverlay.classList.remove('hidden');
-    }
-  }, 50);
+    })
+    .catch(() => {
+      // on error, still proceed
+      loaderEl.classList.add('hidden');
+      homepageEl.classList.add('visible');
+      document.body.style.overflow = 'auto';
+      splashOverlay.classList.remove('hidden');
+    });
+}
 
+/* —————————————————————————————————
+   Run preloader only on pages that have the loader (index.html)
+   ————————————————————————————————— */
+if (loaderEl && percentEl && homepageEl && splashOverlay && enterBtn) {
+  // start actual preloader
+  startPreloader({ timeoutMs: 18000, minDisplayMs: 500 }).then(() => {
+    // preloader done -> nothing else here (splash overlay will show; enter button already wired below)
+  });
+}
+
+
+/* —————————————————————————————————
+   Loader -> splash ENTER behavior (unchanged)
+   ————————————————————————————————— */
+if (enterBtn) {
   enterBtn.addEventListener('click', () => {
-    splashOverlay.classList.add('hidden');
+    if (splashOverlay) splashOverlay.classList.add('hidden');
   });
 }
 
@@ -111,11 +314,11 @@ function buildDropdownMenu() {
   const page = detectPageType();
 
   // common download item
-const download = {
-  text: 'View Full Portfolio (PDF)',
-  href: 'assets/ananya-full-portfolio.pdf',
-  target: '_blank'
-};
+  const download = {
+    text: 'View Full Portfolio (PDF)',
+    href: 'assets/ananya-full-portfolio.pdf',
+    target: '_blank'
+  };
 
   let items = [];
 
@@ -148,8 +351,7 @@ const download = {
 
   // create list items (li > a) to match your CSS expectation
   menu.innerHTML = items.map(item => {
-return `<li><a href="${item.href}"${item.target ? ' target="_blank"' : ''}>${item.text}</a></li>`;
-
+    return `<li><a href="${item.href}"${item.target ? ' target="_blank"' : ''}>${item.text}</a></li>`;
   }).join('');
 
   // stopPropagation for clicks inside the menu (prevents immediate close)
