@@ -14,9 +14,13 @@
   margin: 0; padding: 0; box-sizing: border-box;
 }
 html, body {
-  width: 100%; height: 100%; overflow: hidden;
+  width: 100%;
+  min-height: 100%;
   background: #282825;
+  /* allow vertical scrolling but prevent horizontal overflow */
+  overflow-x: hidden;
 }
+
 
 /* LOADER */
 .loader {
@@ -679,5 +683,12 @@ html, body {
 }
 .contact-form button:hover {
   opacity: 0.8;
+}
+
+/* Allow vertical scrolling on pages that need it (about/contact) */
+body.about-page,
+body.contact-page {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* smooth scrolling on iOS */
 }
 
