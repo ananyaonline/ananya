@@ -80,7 +80,7 @@ const blobs = {
     overlay: '.tarot-overlay',
     ph:      'assets/images/tarotph.png',
     ds:      'assets/images/tarotdsk.png',
-    link:    'https://www.youtube.com' // default — change per-blob as you like
+    link:    'https://ananyaonline.art/tarot.html' // default — change per-blob as you like
   },
   blue: {
     blob:    '.blueblob',
@@ -88,7 +88,7 @@ const blobs = {
     overlay: '.comwork-overlay',
     ph:      'assets/images/comworkph.png',
     ds:      'assets/images/comworkdsk.png',
-    link:    'https://www.youtube.com'
+    link:    'https://antidisciplinary.club/'
   },
   teal: {
     blob:    '.tealblob',
@@ -96,7 +96,7 @@ const blobs = {
     overlay: '.weard-overlay',
     ph:      'assets/images/wearph.png',
     ds:      'assets/images/weardsk.png',
-    link:    'https://www.youtube.com'
+    link:    'https://ananyaonline.art/wearart.html'
   },
   pink: {
     blob:    '.pinkblob',
@@ -104,7 +104,7 @@ const blobs = {
     overlay: '.web-overlay',
     ph:      'assets/images/webph.png',
     ds:      'assets/images/webdsk.png',
-    link:    'https://www.youtube.com'
+    link:    'https://ananyaonline.art/web.html'
   },
   lime: {
     blob:    '.limeblob',
@@ -112,7 +112,7 @@ const blobs = {
     overlay: '.client-overlay',
     ph:      'assets/images/clientph.png',
     ds:      'assets/images/clientdsk.png',
-    link:    'https://www.youtube.com'
+    link:    'https://ananyaonline.art/client.html'
   },
   purple: {
     blob:    '.purpleblob',
@@ -120,7 +120,7 @@ const blobs = {
     overlay: '.photvid-overlay',
     ph:      'assets/images/photvidph.png',
     ds:      'assets/images/photviddsk.png',
-    link:    'https://www.youtube.com'
+    link:    'https://ananyaonline.art/photvid.html'
   }
 };
 
