@@ -1,10 +1,6 @@
 /* script.js (FULL replacement)
-   Improved, asset-aware preloader:
-   - preloads <img src>, CSS background-image urls (from computed styles + stylesheet rules),
-   - preloads audio elements (waits for canplaythrough/loadeddata),
-   - preloads overlay images referenced in the blobs map (ph/ds),
-   - safety timeout and small min display time,
-   - preserves all existing behavior: audio unlock, hamburger, blobs, overlays, splash ENTER, etc.
+   Same as your previous script, but the message overlay now shows
+   only once total per page load (the first time the user opens any blob).
 */
 
 /* —————————————————————————————————
@@ -74,48 +70,57 @@ const menu          = document.querySelector('.dropdown-menu');
    Blobs mapping (kept identical — used elsewhere)
    Also: we will explicitly include the ph/ds urls in preloader
    ————————————————————————————————— */
+const MESSAGE_PH = 'assets/images/messageph.png';
+const MESSAGE_DS = 'assets/images/messagedsk.png';
+
 const blobs = {
   red: {
     blob:    '.redblob',
     audio:   sfxRed,
     overlay: '.tarot-overlay',
     ph:      'assets/images/tarotph.png',
-    ds:      'assets/images/tarotdsk.png'
+    ds:      'assets/images/tarotdsk.png',
+    link:    'https://www.youtube.com' // default — change per-blob as you like
   },
   blue: {
     blob:    '.blueblob',
     audio:   sfxBlue,
     overlay: '.comwork-overlay',
     ph:      'assets/images/comworkph.png',
-    ds:      'assets/images/comworkdsk.png'
+    ds:      'assets/images/comworkdsk.png',
+    link:    'https://www.youtube.com'
   },
   teal: {
     blob:    '.tealblob',
     audio:   sfxTeal,
     overlay: '.weard-overlay',
     ph:      'assets/images/wearph.png',
-    ds:      'assets/images/weardsk.png'
+    ds:      'assets/images/weardsk.png',
+    link:    'https://www.youtube.com'
   },
   pink: {
     blob:    '.pinkblob',
     audio:   sfxPink,
     overlay: '.web-overlay',
     ph:      'assets/images/webph.png',
-    ds:      'assets/images/webdsk.png'
+    ds:      'assets/images/webdsk.png',
+    link:    'https://www.youtube.com'
   },
   lime: {
     blob:    '.limeblob',
     audio:   sfxLime,
     overlay: '.client-overlay',
     ph:      'assets/images/clientph.png',
-    ds:      'assets/images/clientdsk.png'
+    ds:      'assets/images/clientdsk.png',
+    link:    'https://www.youtube.com'
   },
   purple: {
     blob:    '.purpleblob',
     audio:   sfxPurple,
     overlay: '.photvid-overlay',
     ph:      'assets/images/photvidph.png',
-    ds:      'assets/images/photviddsk.png'
+    ds:      'assets/images/photviddsk.png',
+    link:    'https://www.youtube.com'
   }
 };
 
@@ -203,7 +208,6 @@ function preloadImage(url) {
       img.onload = () => resolve({ url, ok: true });
       img.onerror = () => resolve({ url, ok: false });
       img.src = url;
-      // in some cases browser may not call onload if url is data: and already loaded, but it's fine.
     } catch (e) {
       resolve({ url, ok: false });
     }
@@ -329,12 +333,10 @@ function startPreloader(options = {}) {
       lastPercent = pct;
       percentEl.textContent = `${pct}%`;
     } else {
-      // keep monotonic increase; still update if 0 -> 0 (no change)
       percentEl.textContent = `${lastPercent}%`;
     }
   }
 
-  // Hook: when each asset resolves, increment loadedCount and update visible percent
   const imgPromises = imageUrls.map(url =>
     preloadImage(url).then(() => {
       loadedCount++;
@@ -349,45 +351,32 @@ function startPreloader(options = {}) {
     })
   );
 
-  // Global promises array
   const allPromises = imgPromises.concat(audioPromises);
 
-  // Progress guard: start a timer that updates percent gently if loads are taking a while,
-  // but it never goes above the real computed percent. This avoids the loader sitting stuck at 0.
   let animInterval = null;
   animInterval = setInterval(() => {
-    // compute actual percent from counts
     const actualPct = Math.round((loadedCount / totalCount) * 100);
-    // gently nudge visible percent toward actualPct (by +1)
     const visible = parseInt(percentEl.textContent.replace('%',''), 10) || 0;
     if (visible < actualPct) {
       percentEl.textContent = `${visible + 1}%`;
       lastPercent = visible + 1;
     } else {
-      // if visible >= actual (or equal), ensure it matches actual (won't exceed)
       percentEl.textContent = `${actualPct}%`;
       lastPercent = actualPct;
     }
-  }, 200); // every 200ms
+  }, 200);
 
-  // Race between all assets finishing and a safety timeout
   const timeoutPromise = new Promise((resolve) => {
     setTimeout(() => resolve('timeout'), timeoutMs);
   });
 
   return Promise.race([ Promise.all(allPromises), timeoutPromise ])
     .then(() => {
-      // stop the anim interval
       if (animInterval) clearInterval(animInterval);
-
-      // finalise percent to 100
       percentEl.textContent = '100%';
-
-      // ensure minimum display time is respected
       return new Promise(res => setTimeout(res, minDisplayMs));
     })
     .then(() => {
-      // hide loader and show homepage (same UX as before)
       loaderEl.classList.add('hidden');
       homepageEl.classList.add('visible');
       document.body.style.overflow = 'auto';
@@ -395,7 +384,6 @@ function startPreloader(options = {}) {
     })
     .catch(() => {
       if (animInterval) clearInterval(animInterval);
-      // on any error, proceed anyway (don't block UX)
       loaderEl.classList.add('hidden');
       homepageEl.classList.add('visible');
       document.body.style.overflow = 'auto';
@@ -407,12 +395,10 @@ function startPreloader(options = {}) {
    Run preloader only on pages that have the loader (index.html)
    ————————————————————————————————— */
 if (loaderEl && percentEl && homepageEl && splashOverlay && enterBtn) {
-  // kick off preloader; increased timeout (25s) to handle weak mobile networks
   startPreloader({ timeoutMs: 25000, minDisplayMs: 800 }).then(() => {
-    // nothing additional required here — splash/enter still present
+    // nothing additional required here
   });
 }
-
 
 /* —————————————————————————————————
    ENTER button for splash (unchanged)
@@ -422,7 +408,6 @@ if (enterBtn) {
     if (splashOverlay) splashOverlay.classList.add('hidden');
   });
 }
-
 
 /* —————————————————————————————————
    Dropdown menu: dynamic generation per page
@@ -439,7 +424,6 @@ function buildDropdownMenu() {
   if (!menu) return;
   const page = detectPageType();
 
-  // common download item
   const download = {
     text: 'View Full Portfolio (PDF)',
     href: 'assets/ananya-full-portfolio.pdf',
@@ -488,7 +472,6 @@ function buildDropdownMenu() {
 }
 buildDropdownMenu();
 
-
 /* —————————————————————————————————
    Hamburger open/close behavior (same as before)
    ————————————————————————————————— */
@@ -511,10 +494,13 @@ if (hamburger && menu) {
   });
 }
 
-
 /* —————————————————————————————————
-   Blob audio & overlays (unchanged logic)
+   Blob audio & overlays (unchanged logic mostly)
+   Added:
+    - temporary message image shown only ONCE total (first blob interaction)
+    - per-card clickable link (overlay click & message click open link)
    ————————————————————————————————— */
+
 // collect blob DOM elements that actually exist on the page
 const allBlobEls = Object.values(blobs)
   .map(o => document.querySelector(o.blob))
@@ -545,13 +531,86 @@ function lockOthers(activeBlob) {
   });
 }
 
-// show overlay (safe: only runs when elements exist)
-function showOverlay(overlayEl, blobEl, phoneSrc, deskSrc, origIndex, aboveIndex) {
+// TRACK: whether we've shown the message at least once this page load
+let messageShownOnce = false;
+
+// store the currently active message element (only one ever created per page load)
+let activeMessageEl = null;
+// store overlay click handlers so we can remove them cleanly
+const overlayClickHandlers = new Map();
+
+/* show overlay
+   overlayEl: <img> element for card
+   blobEl: the blob <img> that was clicked
+   phoneSrc / deskSrc: overlay content images
+   origIndex / aboveIndex: z-index bookkeeping
+   link: url to open on click for this card
+*/
+function showOverlay(overlayEl, blobEl, phoneSrc, deskSrc, origIndex, aboveIndex, link) {
   if (!overlayEl || !blobEl) return;
   blobEl.style.zIndex = aboveIndex;
   lockOthers(blobEl);
+
+  // choose src based on viewport width
+  const chosen = (window.innerWidth <= 1024 ? phoneSrc : deskSrc) || phoneSrc || deskSrc || '';
   overlayEl.onload = () => requestAnimationFrame(() => overlayEl.classList.add('visible'));
-  overlayEl.src = (window.innerWidth <= 1024 ? phoneSrc : deskSrc);
+  overlayEl.src = chosen;
+
+  // make overlay clickable and open the provided link
+  overlayEl.style.cursor = 'pointer';
+
+  // remove existing click handler if present
+  if (overlayClickHandlers.has(overlayEl)) {
+    overlayEl.removeEventListener('click', overlayClickHandlers.get(overlayEl));
+    overlayClickHandlers.delete(overlayEl);
+  }
+  const openHandler = (e) => {
+    e.stopPropagation();
+    if (link) window.open(link, '_blank');
+  };
+  overlayEl.addEventListener('click', openHandler);
+  overlayClickHandlers.set(overlayEl, openHandler);
+
+  // Show the MESSAGE only if we haven't shown any message yet this page load
+  if (!messageShownOnce) {
+    messageShownOnce = true;
+
+    // create message element
+    const messageSrc = (window.innerWidth <= 1024 ? MESSAGE_PH : MESSAGE_DS);
+    const msg = document.createElement('img');
+    msg.className = 'overlay-message';
+    msg.src = messageSrc;
+
+    // Add to DOM
+    document.body.appendChild(msg);
+    activeMessageEl = msg;
+
+    // message is clickable: open same link
+    msg.style.cursor = 'pointer';
+    const msgClick = (ev) => {
+      ev.stopPropagation();
+      if (link) window.open(link, '_blank');
+    };
+    msg.addEventListener('click', msgClick);
+
+    // auto-fade after 3s (gradual disappearance)
+    setTimeout(() => {
+      msg.classList.add('hidden');
+      const tidy = () => {
+        msg.removeEventListener('transitionend', tidy);
+        try { if (msg.parentNode) msg.parentNode.removeChild(msg); } catch (e) {}
+        activeMessageEl = null;
+      };
+      msg.addEventListener('transitionend', tidy);
+      // safety remove in case transitionend doesn't fire
+      setTimeout(() => {
+        if (msg && msg.parentNode) {
+          try { msg.parentNode.removeChild(msg); } catch (e) {}
+          activeMessageEl = null;
+        }
+      }, 1000);
+    }, 3000);
+  }
 }
 
 // hide overlay
@@ -561,9 +620,9 @@ function hideOverlay(overlayEl, blobEl, origIndex) {
   blobEl.style.opacity = '0';
   overlayEl.classList.remove('visible');
 
-  // when overlay transition completes, restore blob
+  // restore blob when overlay transition completes
   const handler = function (e) {
-    if (e.propertyName === 'opacity') {
+    if (e.propertyName === 'opacity' || e.propertyName === 'visibility') {
       blobEl.style.zIndex = origIndex;
       blobEl.style.opacity = '1';
       allBlobEls.forEach(b => b.style.pointerEvents = 'auto');
@@ -571,10 +630,22 @@ function hideOverlay(overlayEl, blobEl, origIndex) {
     }
   };
   overlayEl.addEventListener('transitionend', handler);
+
+  // remove overlay click handler if we added one
+  if (overlayClickHandlers.has(overlayEl)) {
+    overlayEl.removeEventListener('click', overlayClickHandlers.get(overlayEl));
+    overlayClickHandlers.delete(overlayEl);
+  }
+
+  // If the active message element is still present, remove it immediately
+  if (activeMessageEl) {
+    try { if (activeMessageEl.parentNode) activeMessageEl.parentNode.removeChild(activeMessageEl); } catch (e) {}
+    activeMessageEl = null;
+  }
 }
 
 // wire each blob only if the DOM element exists for it
-Object.values(blobs).forEach(({ blob, audio, overlay, ph, ds }) => {
+Object.entries(blobs).forEach(([key, { blob, audio, overlay, ph, ds, link }]) => {
   const bEl = document.querySelector(blob);
   const oEl = document.querySelector(overlay);
   if (!bEl || !oEl) return;
@@ -592,7 +663,7 @@ Object.values(blobs).forEach(({ blob, audio, overlay, ph, ds }) => {
     if (oEl.classList.contains('visible')) {
       hideOverlay(oEl, bEl, origZ[bEl.className]);
     } else {
-      showOverlay(oEl, bEl, ph, ds, origZ[bEl.className], aboveZ[overlay]);
+      showOverlay(oEl, bEl, ph, ds, origZ[bEl.className], aboveZ[overlay], link);
     }
   });
 });
@@ -608,7 +679,7 @@ document.addEventListener('click', () => {
   });
 });
 
-// prevent overlay clicks from closing
+// prevent overlay clicks from closing (keeps existing behavior)
 Object.values(blobs).forEach(({ overlay }) => {
   const o = document.querySelector(overlay);
   if (!o) return;
