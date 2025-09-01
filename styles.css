@@ -1,4 +1,5 @@
 
+
 /* styles.css */
 
 /* IMPORTS & RESET */
@@ -455,6 +456,40 @@ html, body {
   pointer-events: auto;
   transition-delay: 0s;
 }
+
+/* -------------------------
+   Overlay message (temporary instruction image)
+   Place this near your other overlay rules (e.g. after .photvid-overlay.visible)
+   ------------------------- */
+.overlay-message {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: calc(100vw - 70px);
+  max-height: calc(100vh - 70px);
+  width: auto;
+  height: auto;
+  z-index: 2000; /* must be above overlays (which are ~140) */
+  opacity: 1;
+  pointer-events: auto; /* clickable so user can click it to open the link too */
+  transition: opacity 0.6s ease;
+  cursor: pointer;
+}
+
+/* fades away when we add .hidden */
+.overlay-message.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (max-width: 500px) {
+  .overlay-message {
+  max-width: calc(100vw - 63px);
+  max-height: calc(100vh - 63px);
+  }
+}
+
 
 /* SPLASH OVERLAY */
 .splash-overlay {
