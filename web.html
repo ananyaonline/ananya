@@ -1,0 +1,137 @@
+<!-- tarot.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Web Based Worlds — Links</title>
+
+  <!-- JetBrains Mono -->
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#000;
+      --fg:#fff;
+      --muted: #cfcfcf;
+      --accent: rgba(255,255,255,0.06);
+      --gap: 1rem;
+      --radius: 12px;
+    }
+    html,body{
+      height:100%;
+      margin:0;
+      background:var(--bg);
+      color:var(--fg);
+      font-family:"JetBrains Mono", monospace;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    /* center container */
+    .wrap{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:3rem 1.25rem;
+    }
+
+    .card{
+      width:100%;
+      max-width:680px;
+      text-align:center;
+    }
+
+    h1{
+      margin:0 0 1.25rem;
+      font-size:clamp(1.7rem,4.5vw,2.6rem);
+      font-weight:600;
+      letter-spacing:0.4px;
+      color:var(--fg);
+    }
+
+    p.lead{
+      margin:0 0 1.5rem;
+      color:var(--muted);
+      font-size:0.95rem;
+    }
+
+    .links{
+      display:flex;
+      flex-direction:column;
+      gap:var(--gap);
+      margin-top:0.5rem;
+    }
+
+    .btn {
+      display:block;
+      text-decoration:none;
+      color:var(--fg);
+      background:transparent;
+      border:1px solid var(--fg);
+      padding:0.95rem 1rem;
+      border-radius:var(--radius);
+      font-size:1.05rem;
+      font-weight:600;
+      transition:transform .12s ease, background .12s ease, color .12s ease;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+      text-align:center;
+      user-select:none;
+    }
+
+    .btn:hover,
+    .btn:focus{
+      transform: translateY(-3px);
+      background: var(--accent);
+      outline: none;
+    }
+
+    .btn:active{
+      transform: translateY(0);
+    }
+
+    .meta {
+      margin-top:1.25rem;
+      color:var(--muted);
+      font-size:0.92rem;
+    }
+
+    @media (max-width:420px){
+      .btn { padding:0.85rem 0.8rem; font-size:1rem; border-radius:10px; }
+      .card { padding:0 6px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <main class="card" role="main" aria-labelledby="page-title">
+      <h1 id="page-title">Web Based Worlds</h1>
+      <p class="lead">Click on any to learn more</p>
+
+      <nav class="links" aria-label="Web links">
+        <a class="btn" href="https://maiyablaney.com" target="_blank" rel="noopener noreferrer">
+          Maiya Blaney’s Album and Artisti Promotional Website
+        </a>
+
+        <a class="btn" href="https://romaiti.com" target="_blank" rel="noopener noreferrer">
+          Rohini Maiti’s Portfolio
+        </a>
+
+        <a class="btn" href="https://ananyaonline.art" target="_blank" rel="noopener noreferrer">
+          Ananya Joshis’s Portfolio
+        </a>
+
+        <a class="btn" href="https://antidisciplinaryclub.github.io/rosmoodmap/" target="_blank" rel="noopener noreferrer">
+          Ro’s mood map
+        </a>
+
+        <a class="btn" href="https://ananyaonline.art" rel="noopener noreferrer">
+          Back to Homepage
+        </a>
+      </nav>
+
+    </main>
+  </div>
+</body>
+</html>
