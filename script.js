@@ -1,6 +1,8 @@
 /* script.js (FULL replacement)
    Same as your previous script, but the message overlay now shows
-   only once total per page load (the first time the user opens any blob).
+   only once total per page load (first blob click). The message image
+   retains the same max sizing as other overlays, and an OK button
+   dismisses it (Bitcount font).
 */
 
 /* —————————————————————————————————
@@ -499,6 +501,7 @@ if (hamburger && menu) {
    Added:
     - temporary message image shown only ONCE total (first blob interaction)
     - per-card clickable link (overlay click & message click open link)
+    - message now has an OK button to dismiss instead of auto-fading
    ————————————————————————————————— */
 
 // collect blob DOM elements that actually exist on the page
@@ -575,41 +578,60 @@ function showOverlay(overlayEl, blobEl, phoneSrc, deskSrc, origIndex, aboveIndex
   if (!messageShownOnce) {
     messageShownOnce = true;
 
-    // create message element
+    // create message wrapper element (container with image + OK button)
     const messageSrc = (window.innerWidth <= 1024 ? MESSAGE_PH : MESSAGE_DS);
-    const msg = document.createElement('img');
-    msg.className = 'overlay-message';
-    msg.src = messageSrc;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'overlay-message';
+    wrapper.setAttribute('role', 'dialog');
+    wrapper.setAttribute('aria-modal', 'true');
+
+    // inner image (keeps original look/size)
+    const msgImg = document.createElement('img');
+    msgImg.className = 'overlay-message-img';
+    msgImg.src = messageSrc;
+    msgImg.alt = 'Message';
+
+    // OK button
+    const okBtn = document.createElement('button');
+    okBtn.className = 'overlay-message-ok';
+    okBtn.textContent = 'OK';
+
+    // append image + button to wrapper
+    wrapper.appendChild(msgImg);
+    wrapper.appendChild(okBtn);
 
     // Add to DOM
-    document.body.appendChild(msg);
-    activeMessageEl = msg;
+    document.body.appendChild(wrapper);
+    activeMessageEl = wrapper;
 
-    // message is clickable: open same link
-    msg.style.cursor = 'pointer';
+    // message wrapper is clickable: open same link (like before)
     const msgClick = (ev) => {
       ev.stopPropagation();
       if (link) window.open(link, '_blank');
     };
-    msg.addEventListener('click', msgClick);
+    wrapper.addEventListener('click', msgClick);
 
-    // auto-fade after 3s (gradual disappearance)
-    setTimeout(() => {
-      msg.classList.add('hidden');
+    // OK button closes/dismisses the message only (doesn't open link)
+    const okHandler = (ev) => {
+      ev.stopPropagation();
+      // fade out
+      wrapper.classList.add('hidden');
       const tidy = () => {
-        msg.removeEventListener('transitionend', tidy);
-        try { if (msg.parentNode) msg.parentNode.removeChild(msg); } catch (e) {}
+        wrapper.removeEventListener('transitionend', tidy);
+        try { if (wrapper.parentNode) wrapper.parentNode.removeChild(wrapper); } catch (e) {}
         activeMessageEl = null;
       };
-      msg.addEventListener('transitionend', tidy);
+      wrapper.addEventListener('transitionend', tidy);
       // safety remove in case transitionend doesn't fire
       setTimeout(() => {
-        if (msg && msg.parentNode) {
-          try { msg.parentNode.removeChild(msg); } catch (e) {}
+        if (wrapper && wrapper.parentNode) {
+          try { wrapper.parentNode.removeChild(wrapper); } catch (e) {}
           activeMessageEl = null;
         }
-      }, 1000);
-    }, 3000);
+      }, 800);
+    };
+    okBtn.addEventListener('click', okHandler);
   }
 }
 
