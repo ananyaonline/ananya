@@ -458,38 +458,83 @@ html, body {
 }
 
 /* -------------------------
-   Overlay message (temporary instruction image)
-   Place this near your other overlay rules (e.g. after .photvid-overlay.visible)
+   Overlay message: wrapper + contents + OK button
+   Replace any previous .overlay-message rules with this block
    ------------------------- */
+
+/* Wrapper — matches overlay sizing used elsewhere (same margins as overlays) */
 .overlay-message {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  max-width: calc(100vw - 70px);
-  max-height: calc(100vh - 70px);
+  /* match other overlays' max sizing: */
+  max-width: calc(100vw - 66px);
+  max-height: calc(100vh - 66px);
   width: auto;
   height: auto;
-  z-index: 2000; /* must be above overlays (which are ~140) */
+  z-index: 2000; /* above overlays */
   opacity: 1;
-  pointer-events: auto; /* clickable so user can click it to open the link too */
-  transition: opacity 0.6s ease;
-  cursor: pointer;
+  pointer-events: auto;
+  transition: opacity 0.4s ease;
+  cursor: default;
+  display: inline-block;
+  box-sizing: border-box;
+  text-align: center;
 }
 
-/* fades away when we add .hidden */
+/* Make the image inside the wrapper the same max-size as other overlays */
+.overlay-message img.overlay-message-img {
+  display: block;
+  max-width: calc(100vw - 66px);
+  max-height: calc(100vh - 66px);
+  width: auto;
+  height: auto;
+  margin: 0 auto;
+  -webkit-user-select: none;
+  user-select: none;
+  pointer-events: none; /* clicks handled by wrapper */
+}
+
+/* OK button styling (Bitcount) — positioned over the image, slightly lower */
+.overlay-message .overlay-message-ok {
+  position: absolute;
+  left: 50%;
+  bottom: 20%;
+  transform: translateX(-50%);
+  font-family: 'Bitcount', sans-serif;
+  font-size: 1.05rem;
+  background: transparent;
+  border: 2px solid #fff8dc;
+  color: #fff8dc;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border-radius: 0.25rem;
+  transition: background 0.2s ease, color 0.2s ease;
+  z-index: 2010; /* above the image */
+}
+
+/* hover states for OK btn */
+.overlay-message .overlay-message-ok:hover {
+  background: #fff;
+  border: 2px solid #000;
+  color: #000;
+}
+
+/* keep your hidden behaviour */
 .overlay-message.hidden {
   opacity: 0;
   pointer-events: none;
 }
 
+/* small phone tweak (if you want the OK button slightly closer on tiny screens) */
 @media (max-width: 500px) {
-  .overlay-message {
-  max-width: calc(100vw - 63px);
-  max-height: calc(100vh - 63px);
+  .overlay-message .overlay-message-ok {
+    bottom: 20%;
+    font-size: 1.5rem;
+    padding: 0.45rem 0.9rem;
   }
 }
-
 
 /* SPLASH OVERLAY */
 .splash-overlay {
