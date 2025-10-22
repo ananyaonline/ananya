@@ -536,6 +536,79 @@ html, body {
   }
 }
 
+/* PDF Password Modal styles — add near other overlay/modal rules or at end of styles.css */
+.pdf-password-modal { position: fixed; inset: 0; z-index: 3000; display: block; pointer-events: none; }
+.pdf-password-modal .pdf-modal-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(2px);
+  transition: opacity .25s ease;
+  opacity: 1;
+}
+.pdf-password-modal .pdf-modal-content {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(720px, calc(100vw - 40px));
+  padding: 1.25rem 1.25rem;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  color: #fff;
+  pointer-events: auto;
+  text-align: left;
+  font-family: 'Fira Sans', sans-serif;
+}
+
+/* content */
+.pdf-modal-content h2 { margin: 0 0 0.4rem 0; font-size: 1.15rem; color: #11cca9; }
+.pdf-modal-instruction { margin: 0 0 0.9rem 0; color: #d6f30d; font-size: 0.95rem; }
+
+/* input */
+#pdfPasswordInput {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 0.65rem;
+  border-radius: 6px;
+  border: 1px solid #666;
+  font-size: 1rem;
+  background: #121212;
+  color: #fff;
+  box-sizing: border-box;
+}
+
+/* error */
+.pdf-modal-error { color: #ff7a7a; min-height: 1.1em; font-size: 0.95rem; margin-bottom: 0.6rem; }
+
+/* actions */
+.pdf-modal-actions { display: flex; gap: .6rem; justify-content: flex-end; margin-top: .25rem; }
+.pdf-modal-btn {
+  padding: 8px 12px; border-radius: 6px; cursor: pointer; border: 1px solid rgba(255,255,255,0.12);
+  background: transparent; color: #fff; font-family: 'Bitcount', sans-serif;
+}
+.pdf-modal-btn.primary { border-color: #11cca9; color: #000; background: #11cca9; }
+.pdf-modal-hint { margin-top: 0.9rem; font-size: 0.82rem; color: rgba(255,255,255,0.6); }
+
+/* hide by default */
+.pdf-password-modal.hidden { display: none; pointer-events: none; }
+
+/* small accessibility helper for sr-only */
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* Responsive tweaks */
+@media (max-width: 520px) {
+  .pdf-modal-content { width: calc(100vw - 28px); padding: 1rem; border-radius: 10px; }
+  #pdfPasswordInput { font-size: 1rem; }
+  .pdf-modal-actions { justify-content: space-between; gap: .5rem; }
+}
+
+
 /* SPLASH OVERLAY */
 .splash-overlay {
   position: fixed;
