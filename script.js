@@ -1,12 +1,24 @@
 /* script.js — FULL replacement
-   Purpose: identical behavior to your previous script but ensures
-   the message images (MESSAGE_PH / MESSAGE_DS) are included in the
-   preloader so they load before the loader hits 100%.
+   Includes:
+     - preloader (images + audio) + message images preloaded
+     - audio unlock
+     - dropdown menu generation
+     - blobs overlay logic + single message shown on first blob click
+     - PDF password modal & session unlock (opens PDF in new tab)
 */
 
-/* —————————————————————————————————
-   Audio: elements, volumes & unlock
-   ————————————————————————————————— */
+/* =========================
+   CONFIG / EASY CHANGES
+   ========================= */
+/* Change this to update the PDF password */
+const PDF_PASSWORD = 'P0rtf0li0$'; // ← change password here
+
+/* Path to the PDF file (same as menu href) */
+const PORTFOLIO_PDF = 'assets/ananya-full-portfolio.pdf';
+
+/* =========================
+   Audio elements & unlock
+   ========================= */
 const sfxRed    = document.getElementById('sfx-red');
 const sfxBlue   = document.getElementById('sfx-blue');
 const sfxTeal   = document.getElementById('sfx-teal');
@@ -15,8 +27,6 @@ const sfxLime   = document.getElementById('sfx-lime');
 const sfxPurple = document.getElementById('sfx-purple');
 
 let audioUnlocked = false;
-
-// default volumes (0.0 - 1.0)
 const audioSettings = [
   { el: sfxRed,    vol: 0.5 },
   { el: sfxBlue,   vol: 0.3 },
@@ -36,7 +46,6 @@ function unlockAudio() {
   applyAudioVolumes();
   audioSettings.forEach(({ el }) => {
     if (!el) return;
-    // Play a short muted play to unlock on some mobile browsers
     el.muted = true;
     el.play().catch(() => {})
       .then(() => {
@@ -48,15 +57,14 @@ function unlockAudio() {
   audioUnlocked = true;
 }
 
-// try unlock once on first click anywhere
+// unlock on first user click (some mobile browsers require user gesture)
 document.addEventListener('click', () => {
   if (!audioUnlocked) unlockAudio();
 }, { once: true });
 
-
-/* —————————————————————————————————
-   Useful DOM refs (guarded)
-   ————————————————————————————————— */
+/* =========================
+   Useful DOM refs
+   ========================= */
 const loaderEl      = document.querySelector('.loader');
 const percentEl     = document.querySelector('.loading-percentage');
 const homepageEl    = document.querySelector('.homepage');
@@ -66,17 +74,15 @@ const enterBtn      = document.getElementById('enter-btn');
 const hamburger     = document.querySelector('.hamburger');
 const menu          = document.querySelector('.dropdown-menu');
 
-
-/* —————————————————————————————————
-   MESSAGE image paths (ensure these are preloaded)
-   ————————————————————————————————— */
+/* =========================
+   Message images: ensure these get preloaded
+   ========================= */
 const MESSAGE_PH = 'assets/images/messageph.png';
 const MESSAGE_DS = 'assets/images/messagedsk.png';
 
-
-/* —————————————————————————————————
-   Blobs mapping (kept identical — used elsewhere)
-   ————————————————————————————————— */
+/* =========================
+   Blobs mapping (unchanged)
+   ========================= */
 const blobs = {
   red: {
     blob:    '.redblob',
@@ -128,10 +134,9 @@ const blobs = {
   }
 };
 
-
-/* —————————————————————————————————
-   Helper: extract url(...) values from CSS text
-   ————————————————————————————————— */
+/* =========================
+   Helpers: extract url(...) values from CSS
+   ========================= */
 function extractUrlsFromStyle(styleValue) {
   const urls = [];
   if (!styleValue || styleValue === 'none') return urls;
@@ -143,26 +148,19 @@ function extractUrlsFromStyle(styleValue) {
   return urls;
 }
 
-/* —————————————————————————————————
-   Collect background-image URLs from:
-     1) computed styles of all elements (safe)
-     2) raw CSSRules from document.styleSheets (may be blocked by CORS; we gracefully ignore)
-   ————————————————————————————————— */
+/* =========================
+   Collect background images (computed + stylesheets)
+   ========================= */
 function collectBackgroundImageUrls() {
   const urls = new Set();
-
-  // 1) computed styles (works even if element is hidden)
   document.querySelectorAll('*').forEach(el => {
     try {
       const style = window.getComputedStyle(el);
       const bg = style.getPropertyValue('background-image');
       extractUrlsFromStyle(bg).forEach(u => urls.add(u));
-    } catch (e) {
-      // ignore unusual computed style errors
-    }
+    } catch (e) {}
   });
 
-  // 2) inspect styleSheets rules for background-image declarations (may throw for cross-origin)
   for (let i = 0; i < document.styleSheets.length; i++) {
     const sheet = document.styleSheets[i];
     try {
@@ -189,17 +187,15 @@ function collectBackgroundImageUrls() {
         }
       }
     } catch (e) {
-      // cross-origin stylesheets will throw; ignore them
       continue;
     }
   }
-
   return Array.from(urls);
 }
 
-/* —————————————————————————————————
-   Preload helpers for images and audio
-   ————————————————————————————————— */
+/* =========================
+   Preload helpers for images & audio
+   ========================= */
 function preloadImage(url) {
   return new Promise((resolve) => {
     if (!url) return resolve({ url, ok: false });
@@ -217,7 +213,6 @@ function preloadImage(url) {
 function preloadAudio(el, maxWaitMs = 12000) {
   return new Promise((resolve) => {
     if (!el) return resolve({ el, ok: false });
-
     if (el.readyState >= 4) return resolve({ el, ok: true });
 
     let resolved = false;
@@ -248,61 +243,50 @@ function preloadAudio(el, maxWaitMs = 12000) {
         el.pause();
         el.muted = wasMuted;
       });
-    } catch (e) {
-      // ignore
-    }
+    } catch (e) {}
   });
 }
 
-/* —————————————————————————————————
-   Build list of assets to preload:
-     - all <img src> attributes
-     - CSS background images (computed + stylesheet parsing)
-     - overlay images referenced in blobs (ph and ds)
-     - the special MESSAGE_PH / MESSAGE_DS images (important!)
-     - audio elements with src
-   ————————————————————————————————— */
+/* =========================
+   Build list of assets to preload
+   ========================= */
 function buildAssetList() {
-  const assets = {
-    imageUrls: [],
-    audioEls: []
-  };
+  const assets = { imageUrls: [], audioEls: [] };
 
-  // 1) <img src> tags (all present images)
+  // <img src>
   document.querySelectorAll('img[src]').forEach(img => {
     const src = img.getAttribute('src');
     if (src) assets.imageUrls.push(src);
   });
 
-  // 2) background images (computed + stylesheets)
+  // background images
   collectBackgroundImageUrls().forEach(url => {
     if (url) assets.imageUrls.push(url);
   });
 
-  // 3) overlay images defined in blobs (they may not be present as src in DOM initially)
+  // blob overlay images
   Object.values(blobs).forEach(b => {
     if (b.ph) assets.imageUrls.push(b.ph);
     if (b.ds) assets.imageUrls.push(b.ds);
   });
 
-  // 4) message images that are shown once on first blob click
+  // message images (important!)
   assets.imageUrls.push(MESSAGE_PH);
   assets.imageUrls.push(MESSAGE_DS);
 
-  // 5) audio elements on the page
+  // audio elements
   document.querySelectorAll('audio[src]').forEach(a => assets.audioEls.push(a));
 
-  // de-dupe
+  // dedupe & filter
   assets.imageUrls = Array.from(new Set(assets.imageUrls)).filter(Boolean);
   assets.audioEls = Array.from(new Set(assets.audioEls)).filter(Boolean);
 
   return assets;
 }
 
-/* —————————————————————————————————
-   Smooth progress updater
-   We will update the visible percent whenever an asset resolves.
-   ————————————————————————————————— */
+/* =========================
+   Preloader: smooth percent updates
+   ========================= */
 function startPreloader(options = {}) {
   const { timeoutMs = 25000, minDisplayMs = 800 } = options;
   if (!loaderEl || !percentEl || !homepageEl || !splashOverlay || !enterBtn) {
@@ -339,17 +323,11 @@ function startPreloader(options = {}) {
   }
 
   const imgPromises = imageUrls.map(url =>
-    preloadImage(url).then(() => {
-      loadedCount++;
-      setPercentByCount();
-    })
+    preloadImage(url).then(() => { loadedCount++; setPercentByCount(); })
   );
 
   const audioPromises = audioEls.map(el =>
-    preloadAudio(el).then(() => {
-      loadedCount++;
-      setPercentByCount();
-    })
+    preloadAudio(el).then(() => { loadedCount++; setPercentByCount(); })
   );
 
   const allPromises = imgPromises.concat(audioPromises);
@@ -392,27 +370,23 @@ function startPreloader(options = {}) {
     });
 }
 
-/* —————————————————————————————————
-   Run preloader only on pages that have the loader (index.html)
-   ————————————————————————————————— */
+/* Run preloader */
 if (loaderEl && percentEl && homepageEl && splashOverlay && enterBtn) {
-  startPreloader({ timeoutMs: 25000, minDisplayMs: 800 }).then(() => {
-    // nothing extra needed
-  });
+  startPreloader({ timeoutMs: 25000, minDisplayMs: 800 }).then(() => {});
 }
 
-/* —————————————————————————————————
-   ENTER button for splash (unchanged)
-   ————————————————————————————————— */
+/* =========================
+   ENTER button behavior
+   ========================= */
 if (enterBtn) {
   enterBtn.addEventListener('click', () => {
     if (splashOverlay) splashOverlay.classList.add('hidden');
   });
 }
 
-/* —————————————————————————————————
-   Dropdown menu: dynamic generation per page
-   ————————————————————————————————— */
+/* =========================
+   Dropdown menu generation — now sets an id on the PDF link
+   ========================= */
 function detectPageType() {
   const seg = window.location.pathname.split('/').pop();
   if (!seg || seg === 'index.html' || seg === 'index') return 'home';
@@ -427,8 +401,9 @@ function buildDropdownMenu() {
 
   const download = {
     text: 'View Full Portfolio (PDF)',
-    href: 'assets/ananya-full-portfolio.pdf',
-    target: '_blank'
+    href: PORTFOLIO_PDF,
+    target: '_blank',
+    id: 'pdf-download-link' // we add an id so JS can intercept
   };
 
   let items = [];
@@ -460,7 +435,10 @@ function buildDropdownMenu() {
   }
 
   menu.innerHTML = items.map(item => {
-    return `<li><a href="${item.href}"${item.target ? ' target="_blank"' : ''}>${item.text}</a></li>`;
+    // add id attribute only for the download item
+    const idAttr = item.id ? ` id="${item.id}"` : '';
+    const targetAttr = item.target ? ' target="_blank"' : '';
+    return `<li><a href="${item.href}"${targetAttr}${idAttr}>${item.text}</a></li>`;
   }).join('');
 
   menu.addEventListener('click', e => e.stopPropagation());
@@ -473,9 +451,9 @@ function buildDropdownMenu() {
 }
 buildDropdownMenu();
 
-/* —————————————————————————————————
-   Hamburger open/close behavior (same as before)
-   ————————————————————————————————— */
+/* =========================
+   Hamburger open/close behavior
+   ========================= */
 if (hamburger && menu) {
   const page = detectPageType();
   if (page !== 'home') {
@@ -495,12 +473,108 @@ if (hamburger && menu) {
   });
 }
 
-/* —————————————————————————————————
-   Blob audio & overlays (unchanged logic mostly)
-   Added:
-    - message image shown only ONCE total (first blob interaction)
-    - message images are preloaded as part of the preloader above
-   ————————————————————————————————— */
+/* =========================
+   PDF password modal logic
+   ========================= */
+/* DOM refs for modal */
+const pdfModal = document.getElementById('pdfPasswordModal');
+const pdfBackdrop = document.getElementById('pdfModalBackdrop');
+const pdfInput = document.getElementById('pdfPasswordInput');
+const pdfSubmitBtn = document.getElementById('pdfSubmitBtn');
+const pdfCancelBtn = document.getElementById('pdfCancelBtn');
+const pdfError = document.getElementById('pdfModalError');
+
+function isPdfUnlockedInSession() {
+  try { return sessionStorage.getItem('pdfUnlocked') === '1'; } catch (e) { return false; }
+}
+
+function setPdfUnlockedInSession() {
+  try { sessionStorage.setItem('pdfUnlocked', '1'); } catch (e) {}
+}
+
+function showPdfModal() {
+  if (!pdfModal) return;
+  pdfError.textContent = '';
+  pdfInput.value = '';
+  pdfModal.classList.remove('hidden');
+  // focus input for quick entry
+  setTimeout(() => pdfInput.focus(), 40);
+
+  // trap keyboard: ESC to close handled below globally
+  document.addEventListener('keydown', pdfKeyHandler);
+}
+
+function hidePdfModal() {
+  if (!pdfModal) return;
+  pdfModal.classList.add('hidden');
+  pdfError.textContent = '';
+  document.removeEventListener('keydown', pdfKeyHandler);
+}
+
+function pdfKeyHandler(e) {
+  if (e.key === 'Escape') {
+    hidePdfModal();
+  } else if (e.key === 'Enter') {
+    attemptPdfUnlock();
+  }
+}
+
+function attemptPdfUnlock() {
+  const val = (pdfInput && pdfInput.value) ? pdfInput.value.trim() : '';
+  if (!val) {
+    pdfError.textContent = 'Please enter a password.';
+    return;
+  }
+  if (val === PDF_PASSWORD) {
+    // success
+    setPdfUnlockedInSession();
+    hidePdfModal();
+    // open PDF in new tab
+    window.open(PORTFOLIO_PDF, '_blank');
+  } else {
+    pdfError.textContent = 'Incorrect password — try again.';
+    // small shake animation optional (not required) — we'll just focus input
+    pdfInput.focus();
+    pdfInput.select();
+  }
+}
+
+/* hook up buttons + clicks */
+if (pdfSubmitBtn) pdfSubmitBtn.addEventListener('click', attemptPdfUnlock);
+if (pdfCancelBtn) pdfCancelBtn.addEventListener('click', hidePdfModal);
+
+/* clicking the backdrop or outside modal should close */
+if (pdfBackdrop) pdfBackdrop.addEventListener('click', hidePdfModal);
+
+/* Intercept the "View Full Portfolio (PDF)" link via its id (set in buildDropdownMenu) */
+function attachPdfLinkInterceptor() {
+  const pdfLink = document.getElementById('pdf-download-link');
+  if (!pdfLink) return;
+
+  // If PDF was already unlocked this session, let the link work normally
+  if (isPdfUnlockedInSession()) {
+    // ensure it opens in new tab; leave it be
+    pdfLink.addEventListener('click', () => {
+      // nothing — default behavior will open the PDF in new tab
+    });
+    return;
+  }
+
+  // otherwise intercept clicks to show modal
+  pdfLink.addEventListener('click', function (ev) {
+    ev.preventDefault();
+    ev.stopPropagation();
+    // show modal
+    showPdfModal();
+  });
+}
+
+// call after the menu exists
+attachPdfLinkInterceptor();
+
+/* =========================
+   Blobs overlay & message logic (as before)
+   ========================= */
 
 // collect blob DOM elements that actually exist on the page
 const allBlobEls = Object.values(blobs)
@@ -511,7 +585,6 @@ const origZ = {};
 const overlayZ = {};
 const aboveZ = {};
 
-// capture z-indices and overlay elements (guarded)
 if (allBlobEls.length > 0) {
   allBlobEls.forEach(el => {
     origZ[el.className] = parseInt(getComputedStyle(el).zIndex, 10) || 0;
@@ -525,42 +598,28 @@ if (allBlobEls.length > 0) {
   });
 }
 
-// helper: lock other blobs while overlay is open
 function lockOthers(activeBlob) {
   allBlobEls.forEach(b => {
     if (b !== activeBlob) b.style.pointerEvents = 'none';
   });
 }
 
-// TRACK: whether we've shown the message at least once this page load
+// track if message shown once
 let messageShownOnce = false;
-
-// store the currently active message element (only one ever created per page load)
 let activeMessageEl = null;
-// store overlay click handlers so we can remove them cleanly
 const overlayClickHandlers = new Map();
 
-/* show overlay
-   overlayEl: <img> element for card
-   blobEl: the blob <img> that was clicked
-   phoneSrc / deskSrc: overlay content images
-   origIndex / aboveIndex: z-index bookkeeping
-   link: url to open on click for this card
-*/
 function showOverlay(overlayEl, blobEl, phoneSrc, deskSrc, origIndex, aboveIndex, link) {
   if (!overlayEl || !blobEl) return;
   blobEl.style.zIndex = aboveIndex;
   lockOthers(blobEl);
 
-  // choose src based on viewport width
   const chosen = (window.innerWidth <= 1024 ? phoneSrc : deskSrc) || phoneSrc || deskSrc || '';
   overlayEl.onload = () => requestAnimationFrame(() => overlayEl.classList.add('visible'));
   overlayEl.src = chosen;
 
-  // make overlay clickable and open the provided link
   overlayEl.style.cursor = 'pointer';
 
-  // remove existing click handler if present
   if (overlayClickHandlers.has(overlayEl)) {
     overlayEl.removeEventListener('click', overlayClickHandlers.get(overlayEl));
     overlayClickHandlers.delete(overlayEl);
@@ -572,11 +631,8 @@ function showOverlay(overlayEl, blobEl, phoneSrc, deskSrc, origIndex, aboveIndex
   overlayEl.addEventListener('click', openHandler);
   overlayClickHandlers.set(overlayEl, openHandler);
 
-  // Show the MESSAGE only if we haven't shown any message yet this page load
   if (!messageShownOnce) {
     messageShownOnce = true;
-
-    // create message wrapper element (container with image + OK button)
     const messageSrc = (window.innerWidth <= 1024 ? MESSAGE_PH : MESSAGE_DS);
 
     const wrapper = document.createElement('div');
@@ -584,36 +640,29 @@ function showOverlay(overlayEl, blobEl, phoneSrc, deskSrc, origIndex, aboveIndex
     wrapper.setAttribute('role', 'dialog');
     wrapper.setAttribute('aria-modal', 'true');
 
-    // inner image (keeps original look/size)
     const msgImg = document.createElement('img');
     msgImg.className = 'overlay-message-img';
     msgImg.src = messageSrc;
     msgImg.alt = 'Message';
 
-    // OK button
     const okBtn = document.createElement('button');
     okBtn.className = 'overlay-message-ok';
     okBtn.textContent = 'OK';
 
-    // append image + button to wrapper
     wrapper.appendChild(msgImg);
     wrapper.appendChild(okBtn);
 
-    // Add to DOM
     document.body.appendChild(wrapper);
     activeMessageEl = wrapper;
 
-    // message wrapper is clickable: open same link (like before)
     const msgClick = (ev) => {
       ev.stopPropagation();
       if (link) window.open(link, '_blank');
     };
     wrapper.addEventListener('click', msgClick);
 
-    // OK button closes/dismisses the message only (doesn't open link)
     const okHandler = (ev) => {
       ev.stopPropagation();
-      // fade out
       wrapper.classList.add('hidden');
       const tidy = () => {
         wrapper.removeEventListener('transitionend', tidy);
@@ -621,7 +670,6 @@ function showOverlay(overlayEl, blobEl, phoneSrc, deskSrc, origIndex, aboveIndex
         activeMessageEl = null;
       };
       wrapper.addEventListener('transitionend', tidy);
-      // safety remove in case transitionend doesn't fire
       setTimeout(() => {
         if (wrapper && wrapper.parentNode) {
           try { wrapper.parentNode.removeChild(wrapper); } catch (e) {}
@@ -633,14 +681,11 @@ function showOverlay(overlayEl, blobEl, phoneSrc, deskSrc, origIndex, aboveIndex
   }
 }
 
-// hide overlay
 function hideOverlay(overlayEl, blobEl, origIndex) {
   if (!overlayEl || !blobEl) return;
-  // fade out blob visually while overlay closes
   blobEl.style.opacity = '0';
   overlayEl.classList.remove('visible');
 
-  // restore blob when overlay transition completes
   const handler = function (e) {
     if (e.propertyName === 'opacity' || e.propertyName === 'visibility') {
       blobEl.style.zIndex = origIndex;
@@ -651,33 +696,28 @@ function hideOverlay(overlayEl, blobEl, origIndex) {
   };
   overlayEl.addEventListener('transitionend', handler);
 
-  // remove overlay click handler if we added one
   if (overlayClickHandlers.has(overlayEl)) {
     overlayEl.removeEventListener('click', overlayClickHandlers.get(overlayEl));
     overlayClickHandlers.delete(overlayEl);
   }
 
-  // If the active message element is still present, remove it immediately
   if (activeMessageEl) {
     try { if (activeMessageEl.parentNode) activeMessageEl.parentNode.removeChild(activeMessageEl); } catch (e) {}
     activeMessageEl = null;
   }
 }
 
-// wire each blob only if the DOM element exists for it
 Object.entries(blobs).forEach(([key, { blob, audio, overlay, ph, ds, link }]) => {
   const bEl = document.querySelector(blob);
   const oEl = document.querySelector(overlay);
   if (!bEl || !oEl) return;
 
-  // hover sound
   bEl.addEventListener('mouseenter', () => {
     if (!audioUnlocked || !audio) return;
     audio.currentTime = 0;
     audio.play().catch(() => {});
   });
 
-  // click toggles overlay
   bEl.addEventListener('click', e => {
     e.stopPropagation();
     if (oEl.classList.contains('visible')) {
@@ -688,7 +728,7 @@ Object.entries(blobs).forEach(([key, { blob, audio, overlay, ph, ds, link }]) =>
   });
 });
 
-// close overlays on outside click (if any overlays exist)
+// outside click closes any overlays
 document.addEventListener('click', () => {
   Object.values(blobs).forEach(({ overlay, blob }) => {
     const oEl = document.querySelector(overlay);
@@ -699,9 +739,15 @@ document.addEventListener('click', () => {
   });
 });
 
-// prevent overlay clicks from closing (keeps existing behavior)
+// prevent overlay clicks from closing page-level listener
 Object.values(blobs).forEach(({ overlay }) => {
   const o = document.querySelector(overlay);
   if (!o) return;
   o.addEventListener('click', e => e.stopPropagation());
 });
+
+/* =========================
+   After DOM changes (menu built) re-attach PDF interceptor
+   If your site uses navigation that rebuilds the menu, call attachPdfLinkInterceptor again.
+   ========================= */
+attachPdfLinkInterceptor();
