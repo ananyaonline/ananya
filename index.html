@@ -82,6 +82,26 @@
 
   </div>
 
+  <!-- PDF Password Modal: paste this before <script src="script.js"></script> -->
+<div class="pdf-password-modal hidden" id="pdfPasswordModal" role="dialog" aria-modal="true" aria-labelledby="pdfModalTitle">
+  <div class="pdf-modal-backdrop" id="pdfModalBackdrop"></div>
+  <div class="pdf-modal-content" role="document">
+    <h2 id="pdfModalTitle">Enter password to view portfolio</h2>
+
+    <label for="pdfPasswordInput" class="sr-only">PDF password</label>
+    <input id="pdfPasswordInput" type="password" autocomplete="current-password"
+           placeholder="Enter password" />
+
+    <div class="pdf-modal-error" id="pdfModalError" aria-live="polite"></div>
+
+    <div class="pdf-modal-actions">
+      <button id="pdfCancelBtn" type="button" class="pdf-modal-btn">Cancel</button>
+      <button id="pdfSubmitBtn" type="button" class="pdf-modal-btn primary">Unlock</button>
+    </div>
+  </div>
+</div>
+
+
   <script src="script.js"></script>
 </body>
 </html>
