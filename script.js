@@ -1,8 +1,7 @@
-/* script.js (FULL replacement)
-   Same as your previous script, but the message overlay now shows
-   only once total per page load (first blob click). The message image
-   retains the same max sizing as other overlays, and an OK button
-   dismisses it (Bitcount font).
+/* script.js — FULL replacement
+   Purpose: identical behavior to your previous script but ensures
+   the message images (MESSAGE_PH / MESSAGE_DS) are included in the
+   preloader so they load before the loader hits 100%.
 */
 
 /* —————————————————————————————————
@@ -69,12 +68,15 @@ const menu          = document.querySelector('.dropdown-menu');
 
 
 /* —————————————————————————————————
-   Blobs mapping (kept identical — used elsewhere)
-   Also: we will explicitly include the ph/ds urls in preloader
+   MESSAGE image paths (ensure these are preloaded)
    ————————————————————————————————— */
 const MESSAGE_PH = 'assets/images/messageph.png';
 const MESSAGE_DS = 'assets/images/messagedsk.png';
 
+
+/* —————————————————————————————————
+   Blobs mapping (kept identical — used elsewhere)
+   ————————————————————————————————— */
 const blobs = {
   red: {
     blob:    '.redblob',
@@ -82,7 +84,7 @@ const blobs = {
     overlay: '.tarot-overlay',
     ph:      'assets/images/tarotph.png',
     ds:      'assets/images/tarotdsk.png',
-    link:    'https://ananyaonline.art/tarot.html' // default — change per-blob as you like
+    link:    'https://ananyaonline.art/tarot.html'
   },
   blue: {
     blob:    '.blueblob',
@@ -145,7 +147,6 @@ function extractUrlsFromStyle(styleValue) {
    Collect background-image URLs from:
      1) computed styles of all elements (safe)
      2) raw CSSRules from document.styleSheets (may be blocked by CORS; we gracefully ignore)
-   This ensures we pick up background images defined in external CSS files and inline.
    ————————————————————————————————— */
 function collectBackgroundImageUrls() {
   const urls = new Set();
@@ -169,15 +170,12 @@ function collectBackgroundImageUrls() {
       if (!rules) continue;
       for (let r = 0; r < rules.length; r++) {
         const rule = rules[r];
-        // some rules are style rules
         if (rule && rule.style) {
           const bg = rule.style.getPropertyValue('background-image');
           if (bg) extractUrlsFromStyle(bg).forEach(u => urls.add(u));
-          // also check shorthand 'background'
           const b0 = rule.style.getPropertyValue('background');
           if (b0) extractUrlsFromStyle(b0).forEach(u => urls.add(u));
         }
-        // nested rules (e.g., media queries) may have cssRules too
         if (rule && rule.cssRules) {
           for (let j = 0; j < rule.cssRules.length; j++) {
             const r2 = rule.cssRules[j];
@@ -220,7 +218,6 @@ function preloadAudio(el, maxWaitMs = 12000) {
   return new Promise((resolve) => {
     if (!el) return resolve({ el, ok: false });
 
-    // If audio already ready, resolve immediately
     if (el.readyState >= 4) return resolve({ el, ok: true });
 
     let resolved = false;
@@ -241,10 +238,8 @@ function preloadAudio(el, maxWaitMs = 12000) {
     el.addEventListener('loadeddata', loadcb, { once: true });
     el.addEventListener('error', errcb, { once: true });
 
-    // safety fallback: if nothing triggers, resolve after maxWaitMs
     setTimeout(() => tidy(el.readyState >= 2), Math.min(maxWaitMs, 15000));
 
-    // attempt a small muted play to nudge browsers to fetch audio data
     try {
       const wasMuted = el.muted;
       el.muted = true;
@@ -264,6 +259,7 @@ function preloadAudio(el, maxWaitMs = 12000) {
      - all <img src> attributes
      - CSS background images (computed + stylesheet parsing)
      - overlay images referenced in blobs (ph and ds)
+     - the special MESSAGE_PH / MESSAGE_DS images (important!)
      - audio elements with src
    ————————————————————————————————— */
 function buildAssetList() {
@@ -272,7 +268,7 @@ function buildAssetList() {
     audioEls: []
   };
 
-  // 1) <img src> tags
+  // 1) <img src> tags (all present images)
   document.querySelectorAll('img[src]').forEach(img => {
     const src = img.getAttribute('src');
     if (src) assets.imageUrls.push(src);
@@ -289,12 +285,16 @@ function buildAssetList() {
     if (b.ds) assets.imageUrls.push(b.ds);
   });
 
-  // 4) audio elements on the page
+  // 4) message images that are shown once on first blob click
+  assets.imageUrls.push(MESSAGE_PH);
+  assets.imageUrls.push(MESSAGE_DS);
+
+  // 5) audio elements on the page
   document.querySelectorAll('audio[src]').forEach(a => assets.audioEls.push(a));
 
   // de-dupe
-  assets.imageUrls = Array.from(new Set(assets.imageUrls));
-  assets.audioEls = Array.from(new Set(assets.audioEls));
+  assets.imageUrls = Array.from(new Set(assets.imageUrls)).filter(Boolean);
+  assets.audioEls = Array.from(new Set(assets.audioEls)).filter(Boolean);
 
   return assets;
 }
@@ -306,7 +306,6 @@ function buildAssetList() {
 function startPreloader(options = {}) {
   const { timeoutMs = 25000, minDisplayMs = 800 } = options;
   if (!loaderEl || !percentEl || !homepageEl || !splashOverlay || !enterBtn) {
-    // missing page-specific elements -> show homepage immediately
     if (loaderEl) loaderEl.classList.add('hidden');
     if (homepageEl) homepageEl.classList.add('visible');
     document.body.style.overflow = 'auto';
@@ -398,7 +397,7 @@ function startPreloader(options = {}) {
    ————————————————————————————————— */
 if (loaderEl && percentEl && homepageEl && splashOverlay && enterBtn) {
   startPreloader({ timeoutMs: 25000, minDisplayMs: 800 }).then(() => {
-    // nothing additional required here
+    // nothing extra needed
   });
 }
 
@@ -499,9 +498,8 @@ if (hamburger && menu) {
 /* —————————————————————————————————
    Blob audio & overlays (unchanged logic mostly)
    Added:
-    - temporary message image shown only ONCE total (first blob interaction)
-    - per-card clickable link (overlay click & message click open link)
-    - message now has an OK button to dismiss instead of auto-fading
+    - message image shown only ONCE total (first blob interaction)
+    - message images are preloaded as part of the preloader above
    ————————————————————————————————— */
 
 // collect blob DOM elements that actually exist on the page
