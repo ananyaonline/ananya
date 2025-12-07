@@ -27,11 +27,42 @@
     <h1 class="contact-title">Get in Touch</h1>
 
     <!-- Direct Links -->
-    <div class="contact-links">
-      <p><a href="mailto:ananyajoshionline@gmail.com">Email</a></p>
-      <p><a href="https://instagram.com/ananyaj" target="_blank">Instagram</a></p>
-      <p><a href="https://www.linkedin.com/in/ananyaonline/" target="_blank">LinkedIn</a></p>
-    </div>
+<div class="contact-links">
+  <a href="mailto:ananyajoshionline@gmail.com" class="contact-button">Email</a>
+  <a href="https://instagram.com/ananyaj" target="_blank" class="contact-button">Instagram</a>
+  <a href="https://www.linkedin.com/in/ananyaonline/" target="_blank" class="contact-button">LinkedIn</a>
+</div>
+
+<style>
+.contact-links {
+  display: flex; /* Arranges the buttons horizontally */
+  gap: 10px; /* Adds space between the buttons */
+  justify-content: center; /* Centers the buttons (optional) */
+}
+
+.contact-button {
+  /* Button Styling */
+  display: inline-block;
+  padding: 8px 15px; /* Vertical and horizontal spacing inside the button */
+  border: 1px solid #333; /* A slight border */
+  background-color: #f0f0f0; /* Light background color */
+  color: #333; /* Text color */
+  text-decoration: none; /* Removes the default underline */
+  text-align: center;
+  
+  /* Rounded Edges */
+  border-radius: 20px; /* Key for making it rounded */
+  
+  /* Optional: Hover effect for interactivity */
+  transition: background-color 0.3s ease;
+}
+
+.contact-button:hover {
+  background-color: #ddd; /* Darken slightly on hover */
+  color: #000;
+}
+
+</style>
 
     <!-- Contact Form -->
     <form action="https://formspree.io/f/xdklnebr" method="POST" class="contact-form">
